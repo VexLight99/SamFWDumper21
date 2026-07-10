@@ -38,6 +38,7 @@ LIB_FILES=$(cat targets/system/lib.txt 2>/dev/null | tr '\n' ' ')
 LIB64_FILES=$(cat targets/system/lib64.txt 2>/dev/null | tr '\n' ' ')
 FRAMEWORK_JARS=$(cat targets/system/framework.txt 2>/dev/null | tr '\n' ' ')
 CAMERADATA_ITEMS=$(cat targets/system/cameradata.txt 2>/dev/null | tr '\n' ' ')
+APEX_FILES=$(cat targets/system/apex.txt 2>/dev/null | tr '\n' ' ')
 
 echo ""; echo "[1/6] Downloading..."
 wget -q --no-check-certificate --content-disposition "$URL"
@@ -199,6 +200,19 @@ extract_f2fs_mount() {
     $JAR_FOUND || echo "  ⚠️ framework/$JAR not found"
   done
 
+  for FILE in $APEX_FILES; do
+    FILE_FOUND=false
+    for SRC_PATH in "$MNT/apex/$FILE" "$MNT/system/apex/$FILE"; do
+      if sudo test -e "$SRC_PATH" 2>/dev/null; then
+        mkdir -p "$OUT_DIR/apex"
+        sudo cp -r "$SRC_PATH" "$OUT_DIR/apex/$FILE"
+        sudo chown -R $(id -u):$(id -g) "$OUT_DIR/apex/$FILE"
+        FILE_FOUND=true; break
+      fi
+    done
+    $FILE_FOUND || echo "  ⚠️ apex/$FILE not found"
+  done
+
   sudo umount "$MNT"
   rm -rf "$MNT"
   return 0
@@ -340,6 +354,16 @@ else
       if debugfs -R "stat $SRC" "$SYSTEM_IMG" 2>/dev/null | grep -q "Type: regular"; then
         mkdir -p "system_extracted/framework"
         debugfs -R "dump $SRC system_extracted/framework/$JAR" "$SYSTEM_IMG" 2>/dev/null
+        break
+      fi
+    done
+  done
+
+  for FILE in $APEX_FILES; do
+    for TARGET in "apex/$FILE" "system/apex/$FILE"; do
+      if debugfs -R "ls $TARGET" "$SYSTEM_IMG" 2>/dev/null | grep -q .; then
+        mkdir -p "system_extracted/apex"
+        debugfs -R "rdump $TARGET system_extracted/apex/$FILE" "$SYSTEM_IMG" 2>/dev/null
         break
       fi
     done
@@ -598,6 +622,23 @@ if [ -n "$FRAMEWORK_JARS" ]; then
       fi
     done
     $FOUND || echo "    ❌ framework/$JAR not found"
+  done
+fi
+
+if [ -n "$APEX_FILES" ]; then
+  for FILE in $APEX_FILES; do
+    FOUND=false
+    for BASE in \
+      "system_extracted/apex/$FILE" \
+      "system_extracted/system/apex/$FILE" \
+      "system_extracted/system_a/apex/$FILE" \
+      "system_extracted/system/system/apex/$FILE" \
+      "system_extracted/system_a/system/apex/$FILE"; do
+      if [ -e "$BASE" ]; then
+        copy_item "$BASE" "$SYS_OUT/apex" "$FILE" "apex/$FILE" && HAS_ANY=true && FOUND=true && break
+      fi
+    done
+    $FOUND || echo "    ❌ apex/$FILE not found"
   done
 fi
 

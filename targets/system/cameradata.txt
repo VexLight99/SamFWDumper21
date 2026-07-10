@@ -1,3 +1,0 @@
-camera-feature.xml
-portrait_data
-aremoji-feature.xml

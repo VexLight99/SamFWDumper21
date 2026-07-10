@@ -1,5 +1,0 @@
-wallpaper-res
-AODService_v80
-CSC
-DressRoom
-PhotoEditor_Full

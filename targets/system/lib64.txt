@@ -1,6 +1,7 @@
-libxml2.so
-vendor.samsung.hardware.vibrator@2.1.so
-libSurfaceFlingerProp.so
-libSAG_VM_Energy_v300.so
-extractors
-hw
+libhybridHDR_wrapper.camera.samsung.so
+libhybrid_high_dynamic_range.arcsoft.so
+libSwIsp_core.camera.samsung.so
+libSwIsp_wrapper_v1.camera.samsung.so
+libMultiFrameProcessing30.camera.samsung.so
+libMultiFrameProcessing30.snapwrapper.camera.samsung.so
+libMultiFrameProcessing30Tuning.camera.samsung.so
